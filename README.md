@@ -1,29 +1,15 @@
 # autonomy27-startup
 
-Vi skal lage det jeg vil kalle q-art 
+Vi skal tegne i [QGroundControl](https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html)
 
 <img src="bilder/image.png" alt="bad path in q" width="500"/>
 
 
-## Docker image
-
-### i VS code :
-
-### i terminalen
-
-build image
-```bash
-source /opt/ros/jazzy/setup.bash
-docker build -f docker/Dockerfile -t q-art .
-```
-start container
-
-```bash
-docker run -it --rm \ -v "$(pwd):/workspaces/ros2-px4" \ -w /workspaces/ros2-px4 \ q-art
-```
-
 ## ROS 2 workspace
 
+```bash
+source /opt/ros/jazzy/setup.bash
+```
 bygg ved å kjøre 
 ```bash
 colcon build 
@@ -32,9 +18,14 @@ then source workspace
 ```bash
 source install/setup.bash
 ```
+run the code
+
+```bash
+ros2 run package_name node_name
+```
 
 # selve oppgaven
-q-art er inspirert fra strava art (se [link](https://www.strav.art/)). målet er å bli kjent med flere verktøy vi kommer til å bruke i løpet av året. 
+Målet er å bli kjent med flere verktøy vi kommer til å bruke i løpet av året. 
 
 lage et program som gjør at en drone kan:
 - lette
