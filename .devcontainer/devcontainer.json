@@ -1,0 +1,29 @@
+{
+    "name": "ROS 2 Jazzy + PX4",
+
+    "build": {
+        "dockerfile": "../docker/Dockerfile",
+        "context": "..",
+        "args": {
+            "USERNAME": "ascend"
+        }
+    },
+
+    "remoteUser": "ascend",
+    "containerUser": "ascend",
+    "updateRemoteUserUID": true,
+
+    "workspaceFolder": "/workspaces/ros2-px4",
+
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/ros2-px4,type=bind",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-python.python",
+                "ms-iot.vscode-ros"
+            ]
+        }
+    }
+}
