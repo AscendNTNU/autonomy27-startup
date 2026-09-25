@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'test_node = drone_fsm.test_node:main'
+            'test_node = drone_fsm.test_node:main',
+            'go_to_node = drone_fsm.go_to_node:main'
         ],
-    },
+    }
 )
