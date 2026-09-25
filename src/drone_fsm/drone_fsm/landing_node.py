@@ -61,7 +61,7 @@ class LandingNode(Node):
         self.get_logger().info(
             f"Mottatt VehicleLocalPosition: {position}. Avstand: {distance:.3f}")
 
-        threshold = 0.25  # 25 cm
+        threshold = 0.1  # 10 cm
         if distance < threshold:
             self.landing_finished()
         
