@@ -8,7 +8,9 @@
             "USERNAME": "ascend"
         }
     },
-
+    "runArgs": [
+        "--net=host"
+    ],
     "remoteUser": "ascend",
     "containerUser": "ascend",
     "updateRemoteUserUID": true,
