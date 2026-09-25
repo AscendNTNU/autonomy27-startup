@@ -1,7 +1,7 @@
 import rclpy
 import math
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliability, QoSHistoryPolicy, QoSDurabilityPolicy
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Bool
