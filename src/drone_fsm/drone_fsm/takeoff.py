@@ -1,6 +1,7 @@
 #from px4_msgs.msg import ,,,
 import rclpy
 import rclpy.node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from px4_msgs.msg import (OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleStatus, VehicleLocalPosition)
 
 
@@ -9,9 +10,16 @@ class TakeoffNode(rclpy.node.Node):
         super().__init__('takeoff_node')
         self.get_logger().info('TakeoffNode has been initialized.')
 
-        self.offboardControlPublisher_ = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", 10)
-        self.trajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', 10)
-        self.vehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', 10)
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+
+        self.offboardControlPublisher_ = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_profile)
+        self.trajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_profile)
+        self.vehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
         
         self.offboard_period = 0.3 # The heartbeat signal needs min 2Hz
         self.trajectory_period = 1 # Chose 1 at random
@@ -21,12 +29,12 @@ class TakeoffNode(rclpy.node.Node):
         self.trajectorySetpointTimer = self.create_timer(self.trajectory_period, self.trajectorySetpoint_callback)
         self.vehicleCommandTimer = self.create_timer(self.vehicle_command_period, self.vehicleCommand_callback)
 
-        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos,10)
-        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status,10)
+        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile)
+        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status, qos_profile)
         self.arming_state = VehicleStatus.ARMING_STATE_DISARMED # Taken from github
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX # Taken from github
 
-        self.is_first_pos_msg = True
+        self.last_pos_msg = None
         self.target = [0,0,-3]
 
 
