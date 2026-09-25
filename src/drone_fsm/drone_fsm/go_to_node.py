@@ -3,7 +3,7 @@ import math
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
-from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
@@ -30,15 +30,15 @@ class GoTo(Node):
 
         #QoS profiles
         qos_pub = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
-            history=HistoryPolicy.KEEP_LAST,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
         )
         qos_sub = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-            history=HistoryPolicy.KEEP_LAST,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE,
+            history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
         )
 
@@ -52,8 +52,6 @@ class GoTo(Node):
 
         #Service-client 
         self.land_client = self.create_client(Trigger, '/land')
-        while not self.land_client.wait_for_service(timeout_sec=1.0):
-            self.get_logget().info('Venter på /land-service')
 
         #Subscribers
         self.create_subscription(
@@ -75,7 +73,7 @@ class GoTo(Node):
         )
 
     #Callbacks
-    def waypoints_cb(self, msg: PoseStamped):
+    def waypoints_cb(self, msg: Path):
         if self.state != self.IDLE:
             self.get_logger().warn('Mottok waypoints, men ignorerer')
             return  #ignorer nye waypoints mens vi flyr
@@ -146,7 +144,7 @@ class GoTo(Node):
                 self.request_landing()
                 self.get_logger().info('Ferdig!')
 
-def main():
+def main(args=None):
     rclpy.init(args=args)
     node = GoTo()
 
