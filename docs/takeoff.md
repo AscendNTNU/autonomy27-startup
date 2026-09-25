@@ -11,4 +11,7 @@ bool position (1)
 
 
 
-In order to arm the drone in offboard
+In order to arm the drone in offboardmode these requirments needs to be met:
+* mode_req_angular_velocity - gyroscope? Maybe this just happenes internally and I don't need to think about it?
+* mode_req_attitude - IMU handles this
+* mode_req_offboard_signal - Heartbeat signal that is used to keep the offboard signal alive. Can be done thorough
