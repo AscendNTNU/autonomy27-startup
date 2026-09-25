@@ -7,12 +7,8 @@ from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
-from px4_msgs.msg import (
-    OffboardControlMode,
-    TrajectorySetpoint,
-    VehicleLocalPosition,
-    VehicleStatus,
-)
+from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleLocalPosition, VehicleStatus
+
 
 class GoTo(Node):
     #Tilstandsmaskin
