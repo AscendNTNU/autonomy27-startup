@@ -4,10 +4,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
-from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleLocalPosition, VehicleStatus
+from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleLocalPosition
 
 
 class GoTo(Node):
@@ -103,17 +102,9 @@ class GoTo(Node):
         future = self.land_client.call_async(req)
         future.add_done_callback(self.land_response_cb)
 
-    @staticmethod
-    def yaw_from_quaternion(w, x, y, z):
-        siny_cosp = 2.0 * (w * z + x * y)
-        cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
-        return math.atan2(siny_cosp, cosy_cosp)
-
     def current_target_wp(self):
         pose = self.waypoints[self.current_wp_index].pose
-        q = pose.orientation
-        yaw_enu = self.yaw_from_quaternion(q.w, q.x, q.y, q.z)
-        return pose.position.x, -pose.position.y, -pose.position.z, -yaw_enu
+        return pose.position.x, -pose.position.y, -pose.position.z, float('nan')
 
     def control_loop(self):
         ocm = OffboardControlMode()
@@ -142,7 +133,7 @@ class GoTo(Node):
             if self.current_wp_index >= len(self.waypoints):
                 self.state = self.DONE
                 self.request_landing()
-                self.get_logger().info('Ferdig!')
+                self.get_logger().info('Ferdig! :3')
 
 def main(args=None):
     rclpy.init(args=args)
