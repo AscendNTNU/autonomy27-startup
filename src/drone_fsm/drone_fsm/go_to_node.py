@@ -1,7 +1,12 @@
 import rclpy
 import math
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
+from rclpy.qos import (
+    QoSProfile,
+    QoSReliabilityPolicy,
+    QoSHistoryPolicy,
+    QoSDurabilityPolicy,
+)
 
 from nav_msgs.msg import Path
 from std_srvs.srv import Trigger
@@ -10,24 +15,24 @@ from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleLocalPo
 
 
 class GoTo(Node):
-    #Tilstandsmaskin
+    # Tilstandsmaskin
     IDLE = 0
     FLYING = 1
     DONE = 2
 
     def __init__(self):
-        super().__init__('go_to')
+        super().__init__("go_to")
 
-        #Parameters
-        self.declare_parameter('tolerance', 0.5)
-        self.declare_parameter('timer_period', 0.1)
-        self.tolerance = self.get_parameter('tolerance').value
+        # Parameters
+        self.declare_parameter("tolerance", 0.5)
+        self.declare_parameter("timer_period", 0.1)
+        self.tolerance = self.get_parameter("tolerance").value
         self.state = self.IDLE
         self.waypoints: list = []
-        self.current_wp_index = 0 
-        self.local_position = None 
+        self.current_wp_index = 0
+        self.local_position = None
 
-        #QoS profiles
+        # QoS profiles
         qos_pub = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -41,62 +46,63 @@ class GoTo(Node):
             depth=1,
         )
 
-        #Publishers
+        # Publishers
         self.pub_setpoint = self.create_publisher(
-            TrajectorySetpoint,  '/fmu/in/trajectory_setpoint', qos_pub
+            TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos_pub
         )
         self.pub_offboard_mode = self.create_publisher(
-           OffboardControlMode, '/fmu/in/offboard_control_mode', qos_pub
+            OffboardControlMode, "/fmu/in/offboard_control_mode", qos_pub
         )
 
-        #Service-client 
-        self.land_client = self.create_client(Trigger, '/land')
+        # Service-client
+        self.land_client = self.create_client(Trigger, "/land")
 
-        #Subscribers
+        # Subscribers
         self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.local_position_cb, qos_sub
+            VehicleLocalPosition,
+            "/fmu/out/vehicle_local_position",
+            self.local_position_cb,
+            qos_sub,
         )
 
-        #Subscriber til waypoints
-        self.create_subscription(
-            Path, '/nextwaypoint', self.waypoints_cb, 10
-        )
+        # Subscriber til waypoints
+        self.create_subscription(Path, "/nextwaypoint", self.waypoints_cb, 10)
 
-        #Hovedtimer
+        # Hovedtimer
         self.timer = self.create_timer(
-            self.get_parameter('timer_period').value, self.control_loop
+            self.get_parameter("timer_period").value, self.control_loop
         )
 
-        self.get_logger().info(
-            'Offboard waypoint-node started. Waiting for waypoints'
-        )
+        self.get_logger().info("Offboard waypoint-node started. Waiting for waypoints")
 
-    #Callbacks
+    # Callbacks
     def waypoints_cb(self, msg: Path):
         if self.state != self.IDLE:
-            self.get_logger().warn('Mottok waypoints, men ignorerer')
-            return  #ignorer nye waypoints mens vi flyr
+            self.get_logger().warn("Mottok waypoints, men ignorerer")
+            return  # ignorer nye waypoints mens vi flyr
         if not msg:
             return
-        self.waypoints = list(msg)
-        self.current_wp_index = 0 
+        self.waypoints = msg.poses
+        self.current_wp_index = 0
         self.state = self.FLYING
-        self.get_logger().info(f'Mottok {len(self.waypoints)} waypoints, starter flyging')
+        self.get_logger().info(
+            f"Mottok {len(self.waypoints)} waypoints, starter flyging"
+        )
 
     def local_position_cb(self, msg: VehicleLocalPosition):
         self.local_position = msg
-    
+
     def land_response_cb(self, future):
         response = future.result()
         if response.success:
-            self.get_logger().info(f'Landing: {response.message}')
+            self.get_logger().info(f"Landing: {response.message}")
         else:
-            self.get_logger().error(f'Landing feilet: {response.message}')
+            self.get_logger().error(f"Landing feilet: {response.message}")
 
-    #hendelser
+    # hendelser
     def request_landing(self):
         if not self.land_client.service_is_ready():
-            self.get_logger().error('/land er ikke tilgjengelig')
+            self.get_logger().error("/land er ikke tilgjengelig")
             return
         req = Trigger.Request()
         future = self.land_client.call_async(req)
@@ -104,7 +110,7 @@ class GoTo(Node):
 
     def current_target_wp(self):
         pose = self.waypoints[self.current_wp_index].pose
-        return pose.position.x, -pose.position.y, -pose.position.z, float('nan')
+        return pose.position.x, -pose.position.y, -pose.position.z, float("nan")
 
     def control_loop(self):
         ocm = OffboardControlMode()
@@ -114,7 +120,7 @@ class GoTo(Node):
         self.pub_offboard_mode.publish(ocm)
 
         if self.state != self.FLYING or self.local_position is None:
-            return # IDLE: takeoff-noden strømmer hold-posisjon
+            return  # IDLE: takeoff-noden strømmer hold-posisjon
 
         x, y, z, yaw = self.current_target_wp()
         sp = TrajectorySetpoint()
@@ -127,13 +133,14 @@ class GoTo(Node):
         dist = math.dist((lp.x, lp.y, lp.z), (x, y, z))
         if dist < self.tolerance:
             self.get_logger().info(
-                f'Waypoint {self.current_wp_index + 1}/{len(self.waypoints)} nådd.'
+                f"Waypoint {self.current_wp_index + 1}/{len(self.waypoints)} nådd."
             )
             self.current_wp_index += 1
             if self.current_wp_index >= len(self.waypoints):
                 self.state = self.DONE
                 self.request_landing()
-                self.get_logger().info('Ferdig! :3')
+                self.get_logger().info("Ferdig! :3")
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -147,6 +154,6 @@ def main(args=None):
         node.destroy_node()
         rclpy.shutdown()
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()
