@@ -60,7 +60,7 @@ class TakeoffNode(rclpy.node.Node):
 
         self.trajectorySetpointPublisher_.publish(ts_msg)
 
-        if (self.last_pos_msg.x == 0 and self.last_pos_msg.y == 0 and self.last_pos_mgs.z == 3):
+        if (self.last_pos_msg.position[0] == 0 and self.last_pos_msg.position[1] == 0 and self.last_pos_mgs.position[2] == 3):
             true_msg = msg.Bool()
             true_msg.data = True
             self.takeoffFinishedPublisher_.publish(true_msg)
