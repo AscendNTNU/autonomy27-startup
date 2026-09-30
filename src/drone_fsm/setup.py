@@ -26,6 +26,8 @@ setup(
         'console_scripts': [
             'test_node = drone_fsm.test_node:main',
             'go_to_node = drone_fsm.go_to_node:main'
+            'square = drone_fsm.square:main',
+            'circle = drone_fsm.circle:main',
             'landing_node = drone_fsm.landing_node:main',
             'takeoff = drone_fsm.takeoff:main',
         ],
