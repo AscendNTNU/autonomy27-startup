@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
-from px4_msgs.msg import TrajectorySetpoint, VehicleCommand, OffboardControlMode, VehicleLandDetected
+from px4_msgs.msg import TrajectorySetpoint, VehicleCommand, OffboardControlMode, VehicleLandDetected, VehicleLocalPosition
 from std_srvs.srv import Trigger
 
 
@@ -32,6 +32,9 @@ class LandingNode(Node):
         self.land_detected_subscriber = self.create_subscription(
             VehicleLandDetected, '/fmu/out/vehicle_land_detected', self.land_detected_callback, qos_profile)
 
+        self.position_subscriber = self.create_subscription(
+            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
+
         self.land_service = self.create_service(Trigger, '/land', self.land_service_callback)
 
         self.get_logger().info("Init ferdig")
@@ -54,6 +57,10 @@ class LandingNode(Node):
     def timer_callback(self):
         self.publish_offboard()
         self.publish_setpoint()
+
+    def position_callback(self, msg):
+        position = [msg.x, msg.y, msg.z]
+        self.get_logger().info(f"pos: {position}")
 
     def publish_setpoint(self):
         setpoint = TrajectorySetpoint()
@@ -78,6 +85,7 @@ class LandingNode(Node):
         self.offboard_publisher.publish(msg)
 
     def land_detected_callback(self, msg):
+        self.get_logger().info(f"landed: {msg.landed}. ground_contact: {msg.ground_contact}. is_landing: {self.is_landing}")
         if self.is_landing and msg.landed:
             self.landing_finished()
         
