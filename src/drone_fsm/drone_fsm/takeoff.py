@@ -3,9 +3,10 @@ import rclpy
 import rclpy.node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from px4_msgs.msg import (OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleStatus, VehicleLocalPosition)
-
+from std_msgs import msg
 
 class TakeoffNode(rclpy.node.Node):
+    
     def __init__(self):
         super().__init__('takeoff_node')
         self.get_logger().info('TakeoffNode has been initialized.')
@@ -20,6 +21,7 @@ class TakeoffNode(rclpy.node.Node):
         self.offboardControlPublisher_ = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_profile)
         self.trajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_profile)
         self.vehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
+        self.takeoffFinishedPublisher_ = self.create_publisher(msg.Bool, 'takeoff_done', qos_profile)
         
         self.offboard_period = 0.3 # The heartbeat signal needs min 2Hz
         self.trajectory_period = 1 # Chose 1 at random
@@ -57,6 +59,11 @@ class TakeoffNode(rclpy.node.Node):
         ts_msg.yaw = 0.0
 
         self.trajectorySetpointPublisher_.publish(ts_msg)
+
+        if (self.last_pos_msg.x == 0 and self.last_pos_msg.y == 0 and self.last_pos_mgs.z == 3):
+            true_msg = msg.Bool()
+            true_msg.data = True
+            self.takeoffFinishedPublisher_.publish(true_msg)
 
     def vehicleCommand_callback(self):
         vc_msg = VehicleCommand()
