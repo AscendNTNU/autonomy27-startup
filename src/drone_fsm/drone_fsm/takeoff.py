@@ -2,7 +2,7 @@
 import rclpy
 import rclpy.node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
-from px4_msgs.msg import (OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleStatus, VehicleLocalPositionSetpoint)
+from px4_msgs.msg import (OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleStatus, VehicleLocalPosition)
 from std_msgs import msg
 
 class TakeoffNode(rclpy.node.Node):
@@ -31,7 +31,7 @@ class TakeoffNode(rclpy.node.Node):
         self.trajectorySetpointTimer = self.create_timer(self.trajectory_period, self.trajectorySetpoint_callback)
         self.vehicleCommandTimer = self.create_timer(self.vehicle_command_period, self.vehicleCommand_callback)
 
-        self.pos_subscriber = self.create_subscription(VehicleLocalPositionSetpoint, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile)
+        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile)
         self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status, qos_profile)
         self.arming_state = VehicleStatus.ARMING_STATE_DISARMED # Taken from github
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX # Taken from github
