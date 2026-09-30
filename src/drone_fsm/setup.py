@@ -25,7 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'test_node = drone_fsm.test_node:main',
-            'new_waypoint = drone_fsm.waypoint:main',
+            'square = drone_fsm.square:main',
         ],
     },
 )
