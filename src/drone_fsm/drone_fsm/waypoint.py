@@ -16,25 +16,26 @@ class Waypoint(Node):
         self.figure = figure_name
         self.waypoints = waypoints
         self.path_sent = False
-
-        # Publisher for the whole figure as a PATH
-        self.waypoint_pub = self.create_publisher(Path, '/nextwaypoint', path_qos)
-
-        # Subscription for takeoff updates from Takeoff node
-        self.state_takeoff = self.create_subscription(Bool, '/takeoff_done', self.takeoff_callback, takeoff_qos)
-
-        takeoff_qos = QoSProfile(
-            reliability = QoSReliabilityPolicy.RELIABLE,
-            durability = QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            history = QoSHistoryPolicy.KEEP_LAST,
-            depth = 1)
-
+        
         path_qos = QoSProfile(
             reliability = QoSReliabilityPolicy.RELIABLE,
             durability = QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history = QoSHistoryPolicy.KEEP_LAST,
             depth = 1)
 
+        # Publisher for the whole figure as a PATH
+        self.waypoint_pub = self.create_publisher(Path, '/nextwaypoint', path_qos)
+
+        takeoff_qos = QoSProfile(
+                            reliability = QoSReliabilityPolicy.RELIABLE,
+                            durability = QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                            history = QoSHistoryPolicy.KEEP_LAST,
+                            depth = 1)
+
+        # Subscription for takeoff updates from Takeoff node
+        self.state_takeoff = self.create_subscription(Bool, '/takeoff_done', self.takeoff_callback, takeoff_qos)
+
+        
     # Runs when take off done message is received. Sends the path to the Go-To node.
     def takeoff_callback(self, msg):
         if not msg.data:
