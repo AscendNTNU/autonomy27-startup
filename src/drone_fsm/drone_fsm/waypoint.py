@@ -1,46 +1,58 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg  import String
+from rclpy.qos import (QoSProfile, QoSReliabilityPolicy,
+                       QoSDurabilityPolicy, QoSHistoryPolicy)
+
+from std_msgs.msg import Bool
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 
 class Waypoint(Node):
 
-    def __init__(self):
+    def __init__(self, figure_name, waypoints):
         super().__init__(f'{figure_name}_node')
 
         self.figure = figure_name
         self.waypoints = waypoints
         self.path_sent = False
 
-        # Publisher for the whole figure as a PATH (Subscriber GO_TO - Alex copy topic name)
-        self.waypoint_pub = self.create_publisher(Path, '/nextwaypoint', 10)
+        # Publisher for the whole figure as a PATH
+        self.waypoint_pub = self.create_publisher(Path, '/nextwaypoint', path_qos)
 
         # Subscription for takeoff updates from Takeoff node
-        self.state_takeoff = self.create_subscription(bool, '/takeoff_done', 10)
+        self.state_takeoff = self.create_subscription(Bool, '/takeoff_done', self.takeoff_callback, takeoff_qos)
 
-        self.get_logger().info('Waypoint node has been started. Figure: {self.figure}' 
-                               'Waiting for takeoff..')
+        takeoff_qos = QoSProfile(
+            reliability = QoSReliabilityPolicy.RELIABLE,
+            durability = QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history = QoSHistoryPolicy.KEEP_LAST,
+            depth = 1)
+
+        path_qos = QoSProfile(
+            reliability = QoSReliabilityPolicy.RELIABLE,
+            durability = QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history = QoSHistoryPolicy.KEEP_LAST,
+            depth = 1)
 
     # Runs when take off done message is received. Sends the path to the Go-To node.
     def takeoff_callback(self, msg):
-        if msg.data != "TAKEOFF_DONE":
-            return
-    
+        if not msg.data:
+            return  # takeoff not done yet
+ 
         if self.path_sent:
-            self.get_logger().warn(f'Path already sent, ignoring extra takeoff message')
+            self.get_logger().warn('Path already sent, ignoring extra takeoff message')
             return
-    
-        self.path_sent()
+ 
+        self.send_path()
         self.path_sent = True
-
+ 
     # Sends the path to the Go-To node as a Path message.
     def send_path(self):
         path = Path()
         path.header.stamp = self.get_clock().now().to_msg()
         path.header.frame_id = 'local_ned'  # PX4 local NED coordinates
-
+ 
         for x, y, z in self.waypoints:
             pose = PoseStamped()
             pose.header = path.header
@@ -48,22 +60,22 @@ class Waypoint(Node):
             pose.pose.position.y = y
             pose.pose.position.z = z
             pose.pose.orientation.w = 1.0  # No rotation
-
+ 
             path.poses.append(pose)
-
+ 
         self.waypoint_pub.publish(path)
-        self.get_logger().info(f'[{self.current_figure}] send path with {len(path.poses)} waypoints.')
-
-    # Runs the figure node, initializing ROS2 and spinning until shutdown.
-    def run_figure(figure_name, waypoints, args=None):
-        rclpy.init(args=args)
-        node = Waypoint(figure_name, waypoints)
-
-        try: 
-            rclpy.spin(node)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            node.destroy_node()
-            rclpy.shutdown()
-
+        self.get_logger().info(
+            f'[{self.figure}] sent path with {len(path.poses)} waypoints.')
+ 
+ 
+def run_figure(figure_name, waypoints, args=None):
+    rclpy.init(args=args)
+    node = Waypoint(figure_name, waypoints)
+ 
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
