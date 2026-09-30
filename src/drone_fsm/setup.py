@@ -27,6 +27,8 @@ setup(
             'test_node = drone_fsm.test_node:main',
             'square = drone_fsm.square:main',
             'circle = drone_fsm.circle:main',
+            'landing_node = drone_fsm.landing_node:main',
+            'takeoff = drone_fsm.takeoff:main',
         ],
     },
 )
