@@ -23,12 +23,13 @@ class TakeoffNode(rclpy.node.Node):
         self.vehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
         self.takeoffFinishedPublisher_ = self.create_publisher(msg.Bool, 'takeoff_done', qos_profile)
         
-        self.period_ = 0.3
+        self.period_ = 0.1 # 10Hz timer
 
         self.offboardControlTimer = self.create_timer(self.period_, self.timer_callback)
 
         self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile)
         self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status, qos_profile)
+        
         self.arming_state = VehicleStatus.ARMING_STATE_DISARMED # Taken from github
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX # Taken from github
 
