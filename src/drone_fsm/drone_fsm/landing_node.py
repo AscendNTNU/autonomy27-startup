@@ -40,12 +40,17 @@ class LandingNode(Node):
         self.get_logger().info("Init ferdig")
 
     def land_service_callback(self, request, response):
+        if self.is_landing:
+            self.get_logger().info("Mottatt /land trigger, men lander allerede")
+            response.success = True
+            response.message = "Lander allerede"
+            return response
+        
         self.get_logger().info("Mottatt /land trigger. Starter landing.")
         self.start_landing()
 
         response.success = True
         response.message = ""
-
         return response
 
     def start_landing(self):
@@ -60,7 +65,7 @@ class LandingNode(Node):
 
     def position_callback(self, msg):
         position = [msg.x, msg.y, msg.z]
-        self.get_logger().info(f"pos: {position}")
+        self.get_logger().info(f"pos: {position}", throttle_duration_sec=0.1)
 
     def publish_setpoint(self):
         setpoint = TrajectorySetpoint()
