@@ -29,7 +29,7 @@ setup(
             'square = drone_fsm.square:main',
             'circle = drone_fsm.circle:main',
             'landing_node = drone_fsm.landing_node:main',
-            'takeoff = drone_fsm.takeoff:main',
+            'takeoff_node = drone_fsm.takeoff_node:main',
             'waypoint = drone_fsm.waypoint:main',
         ],
     }
