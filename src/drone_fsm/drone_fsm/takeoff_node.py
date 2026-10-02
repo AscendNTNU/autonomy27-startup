@@ -38,6 +38,8 @@ class TakeoffNode(rclpy.node.Node):
 
 
     def timer_callback(self):
+        # Requires the ARM and OFFBOARD modes from the controller
+
         # Heartbeat to put into offboard mode
         ocm_msg = OffboardControlMode()
         ocm_msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
