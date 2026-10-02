@@ -28,6 +28,7 @@ setup(
             'go_to_node = drone_fsm.go_to_node:main',
             'square = drone_fsm.square:main',
             'circle = drone_fsm.circle:main',
+            'heart = drone_fsm.heart:main',
             'landing_node = drone_fsm.landing_node:main',
             'takeoff_node = drone_fsm.takeoff_node:main',
             'waypoint = drone_fsm.waypoint:main',
