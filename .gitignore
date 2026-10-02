@@ -2,3 +2,4 @@ build/
 install/
 log/
 .vscode/
+.src/drone_fsm/drone_fsm/__pycache__/*

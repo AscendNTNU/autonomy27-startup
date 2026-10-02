@@ -53,16 +53,20 @@ class TakeoffNode(rclpy.node.Node):
             ts_msg.yaw = 0.0
 
             self.trajectorySetpointPublisher_.publish(ts_msg)
-
-        if (abs(self.last_pos_msg.x) < 0.2 and
-            abs(self.last_pos_msg.y) < 0.2 and
-            abs(self.last_pos_msg.z + 3) < 0.2):
+            self.get_logger().info('Publishing setpoint [0, 0, -3]')
             
-            true_msg = msg.Bool()
-            true_msg.data = True
-            for i in range(100):
-                self.takeoffFinishedPublisher_.publish(true_msg)
-            rclpy.shutdown()
+
+            if (abs(self.last_pos_msg.x) < 0.2 and
+                abs(self.last_pos_msg.y) < 0.2 and
+                abs(self.last_pos_msg.z + 3) < 0.2):
+                
+                true_msg = msg.Bool()
+                true_msg.data = True
+                self.get_logger().info('TakeoffNode is at [0, 0, -3]')
+                self.get_logger().info('TakeoffNode startes handoff')
+                for i in range(100):
+                    self.takeoffFinishedPublisher_.publish(true_msg)
+                rclpy.shutdown()
             
            
 
