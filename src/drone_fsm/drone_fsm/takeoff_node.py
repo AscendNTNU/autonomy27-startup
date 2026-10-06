@@ -21,7 +21,7 @@ class TakeoffNode(rclpy.node.Node):
         self.offboardControlPublisher_ = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_profile)
         self.trajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_profile)
         self.vehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
-        self.takeoffFinishedPublisher_ = self.create_publisher(msg.Bool, 'takeoff_done', qos_profile)
+        self.takeoffFinishedPublisher_ = self.create_publisher(msg.Bool, '/takeoff_done', qos_profile) 
         
         self.offboard_period = 0.3 # The heartbeat signal needs min 2Hz
         self.trajectory_period = 1 # Chose 1 at random
@@ -31,13 +31,19 @@ class TakeoffNode(rclpy.node.Node):
         self.trajectorySetpointTimer = self.create_timer(self.trajectory_period, self.trajectorySetpoint_callback)
         self.vehicleCommandTimer = self.create_timer(self.vehicle_command_period, self.vehicleCommand_callback)
 
-        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile)
-        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status, qos_profile)
+        # Topic-name have versionchange because VehicleLocalPosition have MESSAGE_VERSION = 1
+        # in px4_msgs (PX4 b7e991cd8c). Check with `ros2 topic list | grep fmu` of PX4 updates.
+        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self.update_vehicle_pos, qos_profile)
+
+        # VehicleStatus have MESSAGE_VERSION = 4 in our version of px4_msgs, so topic is named vehicle_status_v4.
+        # Without right name the node gets never the status, and would never arm the drone.
+        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status_v4', self.update_vehicle_status, qos_profile)
         self.arming_state = VehicleStatus.ARMING_STATE_DISARMED # Taken from github
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX # Taken from github
 
         self.last_pos_msg = None
         self.target = [0,0,-3]
+        self.done = False # True if takeoff is done. That stops the node completely.
 
 
 
@@ -50,7 +56,7 @@ class TakeoffNode(rclpy.node.Node):
         self.offboardControlPublisher_.publish(ocm_msg)
 
     def trajectorySetpoint_callback(self):
-        if self.last_pos_msg is None:
+        if self.done or self.last_pos_msg is None:
             return
 
         ts_msg = TrajectorySetpoint()
@@ -67,6 +73,16 @@ class TakeoffNode(rclpy.node.Node):
             true_msg = msg.Bool()
             true_msg.data = True
             self.takeoffFinishedPublisher_.publish(true_msg)
+            self.finish_takeoff()
+
+    # Stops all timers when takeoff is done. Or else the node continues sending
+    # setpoints that conflict with go_to, and arms the drone again after landing.
+    def finish_takeoff(self):
+        self.done = True
+        self.offboardControlTimer.cancel()
+        self.trajectorySetpointTimer.cancel()
+        self.vehicleCommandTimer.cancel()
+        self.get_logger().info('Takeoff done. Sends takeoff_done and gives control away.')
 
 
     def vehicleCommand_callback(self):
