@@ -1,5 +1,5 @@
 import numpy as np
-from drone_fsm.drone_fsm.waypoint_node import run_figure
+from drone_fsm.waypoint_node import run_figure
 
 POINT_COUNT      = 20
 DIGIT_LENGTH     = 20.0 # [m]

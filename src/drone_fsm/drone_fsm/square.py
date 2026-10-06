@@ -1,4 +1,4 @@
-from drone_fsm.drone_fsm.waypoint_node import run_figure
+from drone_fsm.waypoint_node import run_figure
 
 WAYPOINTS = [
     # Coordinates are (east, north, up) in the local ENU frame.
