@@ -32,8 +32,10 @@ class LandingNode(Node):
         self.land_detected_subscriber = self.create_subscription(
             VehicleLandDetected, '/fmu/out/vehicle_land_detected', self.land_detected_callback, qos_profile)
 
+        # Topic-navnet har versjonsending fordi VehicleLocalPosition har MESSAGE_VERSION = 1
+        # i px4_msgs (PX4 b7e991cd8c). Uten _v1 får noden ingen posisjonsmeldinger.
         self.position_subscriber = self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
+            VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self.position_callback, qos_profile)
 
         self.land_service = self.create_service(Trigger, '/land', self.land_service_callback)
 
@@ -58,9 +60,11 @@ class LandingNode(Node):
         self.publish_offboard()
         self.publish_setpoint()
 
+    # Logg bare under landing og maks 1 gang per sekund, ellers blir loggen for lang.
     def position_callback(self, msg):
-        position = [msg.x, msg.y, msg.z]
-        self.get_logger().info(f"pos: {position}")
+        if self.is_landing:
+            position = [round(msg.x, 2), round(msg.y, 2), round(msg.z, 2)]
+            self.get_logger().info(f"pos: {position}", throttle_duration_sec=1.0)
 
     def publish_setpoint(self):
         setpoint = TrajectorySetpoint()
@@ -85,7 +89,13 @@ class LandingNode(Node):
         self.offboard_publisher.publish(msg)
 
     def land_detected_callback(self, msg):
-        self.get_logger().info(f"landed: {msg.landed}. ground_contact: {msg.ground_contact}. is_landing: {self.is_landing}")
+    # Logg bare under landing, og maks én gang i sekundet.
+    # PX4 sender landingsstatus jevnlig, så uten dette drukner terminalen.
+        if self.is_landing:
+            self.get_logger().info(
+                f"landed: {msg.landed}. ground_contact: {msg.ground_contact}",
+                throttle_duration_sec=1.0)
+
         if self.is_landing and msg.landed:
             self.landing_finished()
         
