@@ -1,6 +1,6 @@
 from math import cos, sin, pi
 
-from drone_fsm.waypoint import run_figure
+from drone_fsm.drone_fsm.waypoint_node import run_figure
 
 POINT_COUNT = 32
 # The raw formula is about 32 units wide. ROS treats the resulting ENU

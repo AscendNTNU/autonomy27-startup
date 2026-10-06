@@ -1,6 +1,6 @@
 import math
 
-from drone_fsm.waypoint import run_figure
+from drone_fsm.drone_fsm.waypoint_node import run_figure
 
 RADIUS = 1.5
 ALTITUDE = 3.0
