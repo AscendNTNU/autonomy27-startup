@@ -51,8 +51,13 @@ class Waypoint(Node):
             takeoff_qos
         )
 
+        self.get_logger().info(
+            f'[{self.figure}] started with {len(self.waypoints)} waypoints. '
+            'Waiting for /takeoff_done...')
+
     # Runs when take off done message is received. Sends the path to the Go-To node.
     def takeoff_callback(self, msg):
+        self.get_logger().info(f'[{self.figure}] received /takeoff_done: {msg.data}')
         if not msg.data:
             return  # takeoff not done yet
 
@@ -84,8 +89,15 @@ class Waypoint(Node):
             path.poses.append(pose)
 
         self.waypoint_pub.publish(path)
-        self.get_logger().info(f'[{self.figure}] sent path with {len(path.poses)} waypoints.')
 
+        # Chose where figure starts and ends so its easy to see if right points are sent.
+        first = self.waypoints[0]
+        last = self.waypoints[-1]
+
+        self.get_logger().info(
+                    f'[{self.figure}] sent path with {len(path.poses)} waypoints '
+                    f'(ENU, first: {first}, last: {last})')
+        
         return True
 
 
