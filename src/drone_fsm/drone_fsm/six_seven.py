@@ -2,10 +2,10 @@ import numpy as np
 from drone_fsm.waypoint import run_figure
 
 POINT_COUNT      = 20
-DIGIT_LENGTH     = 10.0 # [m]
+DIGIT_LENGTH     = 20.0 # [m]
 DEFAULT_ALTITUDE = 1.5  # [m]
 
-def make_incredible_waypoints(digit_length=DIGIT_LENGTH, altitude=DEFAULT_ALTITUDE, point_count=POINT_COUNT, start_path_at_origin=False):
+def make_incredible_waypoints(digit_length=DIGIT_LENGTH, altitude=DEFAULT_ALTITUDE, point_count=POINT_COUNT):
     # Allocate number of points to each segment using length
     n_stem, n_loop, n_bar = (max(2, round(f * point_count)) for f in (0.18, 0.41, 0.13))
     n_diag = max(2, point_count - n_stem - n_loop - n_bar)
@@ -30,12 +30,25 @@ def make_incredible_waypoints(digit_length=DIGIT_LENGTH, altitude=DEFAULT_ALTITU
 
     # Connect curves
     waypoints = []
-    if start_path_at_origin:
-        waypoints = [(0,0,0)]
     waypoints.extend(list(zip(x6,y6,z6)))
     waypoints.extend(list(zip(x7,y7,z7))[::-1])
 
+    waypoints = set_start_at_origin(waypoints)
+
     return waypoints
+
+def set_start_at_origin(waypoints):
+    first_waypoint = waypoints[0]
+    new_waypoints = [(0,0, first_waypoint[2])]
+
+    for waypoint in waypoints[1:]:
+        new_waypoints.append((
+            waypoint[0] - first_waypoint[0],
+            waypoint[1] - first_waypoint[1],
+            waypoint[2]
+        ))
+
+    return new_waypoints
 
 def main(args=None):
     waypoints = make_incredible_waypoints()
@@ -44,7 +57,7 @@ def main(args=None):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    waypoints = np.array(make_incredible_waypoints(start_path_at_origin=True))
+    waypoints = np.array(make_incredible_waypoints())
 
     ax = plt.figure().add_subplot(projection='3d')
     ax.plot(waypoints[:, 0], waypoints[:, 1], waypoints[:,2])
