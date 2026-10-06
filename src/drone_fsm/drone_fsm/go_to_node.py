@@ -111,6 +111,14 @@ class GoTo(Node):
     def control_loop(self):
         now = int(self.get_clock().now().nanoseconds / 1000)
 
+        # IDLE-sjekken må komme FØR heartbeat. I IDLE er det takeoff som styrer,
+        # og go_to skal ikke sende noe til PX4, heller ikke OffboardControlMode.
+        # Ellers slåss nodene om dronen, og den kommer ikke opp (den hang på 1 m under sim test).
+        # Heartbeat sendes før None-sjekken slik at PX4 holdes i offboard
+        # selv om en posisjonsmelding er forsinket mens vi flyr.
+        if self.state == self.IDLE:
+            return # IDLE: takeoff-noden strømmer hold-posisjon
+
         ocm = OffboardControlMode()
         ocm.timestamp = now
         ocm.position = True
@@ -122,20 +130,7 @@ class GoTo(Node):
         # Trajectory setpoint heart beat
         if self.local_position is None:
             return
-
-        if self.state == self.IDLE:
-            sp = TrajectorySetpoint()
-            sp.timestamp = now
-            sp.position = [
-                self.local_position.x,
-                self.local_position.y,
-                self.local_position.z,
-            ]
-            sp.yaw = float("nan")
-
-            self.pub_setpoint.publish(sp)
-            return
-
+    
         if self.state != self.FLYING:
             return  # IDLE: takeoff-noden strømmer hold-posisjon
 
