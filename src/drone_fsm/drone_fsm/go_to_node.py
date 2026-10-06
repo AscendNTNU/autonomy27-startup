@@ -120,6 +120,9 @@ class GoTo(Node):
         self.pub_offboard_mode.publish(ocm)
 
         # Trajectory setpoint heart beat
+        if self.local_position is None:
+            return
+
         if self.state == self.IDLE:
             sp = TrajectorySetpoint()
             sp.timestamp = now
@@ -133,7 +136,7 @@ class GoTo(Node):
             self.pub_setpoint.publish(sp)
             return
 
-        if self.state != self.FLYING or self.local_position is None:
+        if self.state != self.FLYING:
             return  # IDLE: takeoff-noden strømmer hold-posisjon
 
         # State is FLYING and has recieved waypoints
