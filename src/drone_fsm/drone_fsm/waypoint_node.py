@@ -10,7 +10,7 @@ from rclpy.qos import (
 
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool
+from std_srvs.srv import SetBool
 
 
 class Waypoint(Node):
@@ -43,30 +43,40 @@ class Waypoint(Node):
             depth=1
         )
 
-        # Subscription for takeoff updates from Takeoff node
-        self.state_takeoff = self.create_subscription(
-            Bool,
-            '/takeoff_done',
-            self.takeoff_callback,
-            takeoff_qos
+        # Service for takeoff updates from Takeoff node
+        self.state_takeoff = self.create_service(
+            SetBool,
+            '/takeoff_finished',
+            self.takeoff_callback
         )
 
         self.get_logger().info(
             f'[{self.figure}] started with {len(self.waypoints)} waypoints. '
-            'Waiting for /takeoff_done...')
+            'Waiting for /takeoff_finished...')
 
-    # Runs when take off done message is received. Sends the path to the Go-To node.
-    def takeoff_callback(self, msg):
-        self.get_logger().info(f'[{self.figure}] received /takeoff_done: {msg.data}')
-        if not msg.data:
-            return  # takeoff not done yet
+    # Runs when take off done service is called. Sends the path to the Go-To node.
+    def takeoff_callback(self, request, response):
+        self.get_logger().info(f'[{self.figure}] received /takeoff_finished: {request.data}')
+
+        if not request.data:
+            response.success = False
+            response.message = ''
+            return response
 
         if self.path_sent:
             self.get_logger().warning('Path already sent, ignoring extra takeoff message')
-            return
+            response.success = True
+            response.message = ''
+            return response
 
         if self.send_path():
             self.path_sent = True
+            response.success = True
+        else:
+            response.success = False
+
+        response.message = ''
+        return response
 
     # Sends the path to the Go-To node as a Path message.
     def send_path(self):
