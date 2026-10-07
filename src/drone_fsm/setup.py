@@ -38,6 +38,7 @@ setup(
             'landing_node = drone_fsm.landing_node:main',
             'takeoff_node = drone_fsm.takeoff_node:main',
             'waypoint = drone_fsm.waypoint:main',
+            'contoller_sim_node = drone_fsm.controller_sim_node:main',
         ],
     }
 )

@@ -8,7 +8,7 @@ from px4_msgs.msg import VehicleCommand
 class ControllerSimulator(Node):
 
     def __init__(self):
-        super().__init__('controller_simulator')
+        super().__init__('controller_sim_node')
 
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
