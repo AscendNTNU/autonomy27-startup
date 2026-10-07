@@ -5,7 +5,7 @@ from drone_fsm.waypoint_node import run_figure
 POINT_COUNT = 32
 # The raw formula is about 32 units wide. ROS treats the resulting ENU
 # coordinates as meters, so 0.1 means 0.1 m per unit and about 3.2 m wide.
-SCALE = 0.1
+SCALE = 5
 ALTITUDE = 3.0
 
 
