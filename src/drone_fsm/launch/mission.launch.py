@@ -20,15 +20,8 @@ def generate_launch_description():
 
         Node(
             package='drone_fsm',
-            executable='waypoint_node',
-            name='waypoint_node',
-            output='screen',
-        ),
-
-        Node(
-            package='drone_fsm',
-            executable='circle',
-            name='circle',
+            executable='six_seven',
+            name='six_seven',
             output='screen',
         ),
 
