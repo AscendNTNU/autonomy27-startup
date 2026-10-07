@@ -32,10 +32,8 @@ class LandingNode(Node):
         self.land_detected_subscriber = self.create_subscription(
             VehicleLandDetected, '/fmu/out/vehicle_land_detected', self.land_detected_callback, qos_profile)
 
-        # Topic-navnet har versjonsending fordi VehicleLocalPosition har MESSAGE_VERSION = 1
-        # i px4_msgs (PX4 b7e991cd8c). Uten _v1 får noden ingen posisjonsmeldinger.
         self.position_subscriber = self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self.position_callback, qos_profile)
+            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
 
         self.land_service = self.create_service(Trigger, '/land', self.land_service_callback)
 

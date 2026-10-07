@@ -58,7 +58,7 @@ class GoTo(Node):
         self.land_client = self.create_client(Trigger, "/land")
 
         # Subscribe to local position
-        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position_v1", self.local_position_cb, qos_sub)
+        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.local_position_cb, qos_sub)
 
         # Subscriber til waypoints
         self.create_subscription(Path, "/nextwaypoint", self.waypoints_cb, 10)
