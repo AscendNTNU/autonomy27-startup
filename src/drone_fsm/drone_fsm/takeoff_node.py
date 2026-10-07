@@ -28,11 +28,11 @@ class TakeoffNode(Node):
 
         # Topic-name have versionchange because VehicleLocalPosition have MESSAGE_VERSION = 1
         # in px4_msgs (PX4 b7e991cd8c). Check with `ros2 topic list | grep fmu` of PX4 updates.
-        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.update_vehicle_pos, qos_profile) # Change to '/fmu/out/vehicle_local_position_v1' for gazebo sim
+        self.pos_subscriber = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self.update_vehicle_pos, qos_profile) # Change to '/fmu/out/vehicle_local_position_v1' for gazebo sim
 
         # VehicleStatus has MESSAGE_VERSION = 4 in our version of px4_msgs, so the topic is named vehicle_status_v4.
         
-        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.update_vehicle_status, qos_profile) # Change to '/fmu/out/vehicle_status_v4' for gazebo sim
+        self.status_subscriber = self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status_v1', self.update_vehicle_status, qos_profile) # Change to '/fmu/out/vehicle_status_v4' for gazebo sim
 
         self.arming_state = VehicleStatus.ARMING_STATE_DISARMED
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX

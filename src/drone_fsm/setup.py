@@ -37,8 +37,8 @@ setup(
             'six_seven = drone_fsm.six_seven:main',
             'landing_node = drone_fsm.landing_node:main',
             'takeoff_node = drone_fsm.takeoff_node:main',
-            'waypoint = drone_fsm.waypoint:main',
-            'contoller_sim_node = drone_fsm.controller_sim_node:main',
+            'waypoint_node = drone_fsm.waypoint_node:main',
+            'controller_sim_node = drone_fsm.controller_sim_node:main',
         ],
     }
 )
