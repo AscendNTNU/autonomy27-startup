@@ -90,7 +90,7 @@ class Waypoint(Node):
 
         self.waypoint_pub.publish(path)
 
-        # Chose where figure starts and ends so its easy to see if right points are sent.
+        # Choose where the figure starts and ends so its easy to see if the right points are sent.
         first = self.waypoints[0]
         last = self.waypoints[-1]
 
