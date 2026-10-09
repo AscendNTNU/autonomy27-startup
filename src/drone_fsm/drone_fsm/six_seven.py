@@ -39,7 +39,7 @@ def make_incredible_waypoints(digit_length=DIGIT_LENGTH, altitude=DEFAULT_ALTITU
 
 def set_start_at_origin(waypoints):
     first_waypoint = waypoints[0]
-    new_waypoints = [(0,0, first_waypoint[2])]
+    new_waypoints = [(0.0, 0.0, first_waypoint[2])]
 
     for waypoint in waypoints[1:]:
         new_waypoints.append((

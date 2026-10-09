@@ -2,7 +2,7 @@ import math
 
 from drone_fsm.waypoint_node import run_figure
 
-RADIUS = 1.5
+RADIUS = 20
 ALTITUDE = 3.0
 CIRCLE_POINTS = 36  # Number of points to approximate the circle
 

@@ -10,7 +10,7 @@ from rclpy.qos import (
 
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool
+from std_srvs.srv import SetBool
 
 
 class Waypoint(Node):
@@ -43,25 +43,40 @@ class Waypoint(Node):
             depth=1
         )
 
-        # Subscription for takeoff updates from Takeoff node
-        self.state_takeoff = self.create_subscription(
-            Bool,
-            '/takeoff_done',
-            self.takeoff_callback,
-            takeoff_qos
+        # Service for takeoff updates from Takeoff node
+        self.state_takeoff = self.create_service(
+            SetBool,
+            '/takeoff_finished',
+            self.takeoff_callback
         )
 
-    # Runs when take off done message is received. Sends the path to the Go-To node.
-    def takeoff_callback(self, msg):
-        if not msg.data:
-            return  # takeoff not done yet
+        self.get_logger().info(
+            f'[{self.figure}] started with {len(self.waypoints)} waypoints. '
+            'Waiting for /takeoff_finished...')
+
+    # Runs when take off done service is called. Sends the path to the Go-To node.
+    def takeoff_callback(self, request, response):
+        self.get_logger().info(f'[{self.figure}] received /takeoff_finished: {request.data}')
+
+        if not request.data:
+            response.success = False
+            response.message = ''
+            return response
 
         if self.path_sent:
             self.get_logger().warning('Path already sent, ignoring extra takeoff message')
-            return
+            response.success = True
+            response.message = ''
+            return response
 
         if self.send_path():
             self.path_sent = True
+            response.success = True
+        else:
+            response.success = False
+
+        response.message = ''
+        return response
 
     # Sends the path to the Go-To node as a Path message.
     def send_path(self):
@@ -84,8 +99,15 @@ class Waypoint(Node):
             path.poses.append(pose)
 
         self.waypoint_pub.publish(path)
-        self.get_logger().info(f'[{self.figure}] sent path with {len(path.poses)} waypoints.')
 
+        # Choose where the figure starts and ends so its easy to see if the right points are sent.
+        first = self.waypoints[0]
+        last = self.waypoints[-1]
+
+        self.get_logger().info(
+                    f'[{self.figure}] sent path with {len(path.poses)} waypoints '
+                    f'(ENU, first: {first}, last: {last})')
+        
         return True
 
 

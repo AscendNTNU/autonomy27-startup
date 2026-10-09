@@ -60,10 +60,10 @@ class GoTo(Node):
         # Subscribe to local position
         self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position_v1", self.local_position_cb, qos_sub)
 
-        # Subscriber til waypoints
+        # Subscriber to waypoints
         self.create_subscription(Path, "/nextwaypoint", self.waypoints_cb, 10)
 
-        # Hovedtimer
+        # Maintimer
         self.timer = self.create_timer(
             self.get_parameter("timer_period").value, self.control_loop
         )
@@ -73,15 +73,15 @@ class GoTo(Node):
     # Callbacks
     def waypoints_cb(self, msg: Path):
         if self.state != self.IDLE:
-            self.get_logger().warn("Mottok waypoints, men ignorerer")
-            return  # ignorer nye waypoints mens vi flyr
+            self.get_logger().warn("Received waypoints, but ignores")
+            return  # ignores new waypoints while flying
         if not msg:
             return
         self.waypoints = msg.poses
         self.current_wp_index = 0
         self.state = self.FLYING
         self.get_logger().info(
-            f"Mottok {len(self.waypoints)} waypoints, starter flyging"
+            f"Received {len(self.waypoints)} waypoints, starting to fly"
         )
 
     def local_position_cb(self, msg: VehicleLocalPosition):
@@ -92,12 +92,12 @@ class GoTo(Node):
         if response.success:
             self.get_logger().info(f"Landing: {response.message}")
         else:
-            self.get_logger().error(f"Landing feilet: {response.message}")
+            self.get_logger().error(f"Landing failed: {response.message}")
 
-    # hendelser
+    # States
     def request_landing(self):
         if not self.land_client.service_is_ready():
-            self.get_logger().error("/land er ikke tilgjengelig")
+            self.get_logger().error("/land is not available")
             return
         req = Trigger.Request()
         future = self.land_client.call_async(req)
@@ -111,6 +111,11 @@ class GoTo(Node):
     def control_loop(self):
         now = int(self.get_clock().now().nanoseconds / 1000)
 
+        # IDLE-check need to come BEFORE heartbeat. Takeoff controlls IDLE,
+        # and go_to should not send anything to PX4, neither OffboardControlMode.
+        if self.state == self.IDLE:
+            return # IDLE: takeoff-node streams hold-position, and go_to-node does not send anything to PX4
+
         ocm = OffboardControlMode()
         ocm.timestamp = now
         ocm.position = True
@@ -122,22 +127,9 @@ class GoTo(Node):
         # Trajectory setpoint heart beat
         if self.local_position is None:
             return
-
-        if self.state == self.IDLE:
-            sp = TrajectorySetpoint()
-            sp.timestamp = now
-            sp.position = [
-                self.local_position.x,
-                self.local_position.y,
-                self.local_position.z,
-            ]
-            sp.yaw = float("nan")
-
-            self.pub_setpoint.publish(sp)
-            return
-
+    
         if self.state != self.FLYING:
-            return  # IDLE: takeoff-noden strømmer hold-posisjon
+            return  # IDLE: takeoff-node streams hold-position.
 
         # State is FLYING and has recieved waypoints
         x, y, z, yaw = self.current_target_wp()
@@ -171,7 +163,9 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

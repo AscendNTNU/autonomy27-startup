@@ -1,5 +1,8 @@
 from setuptools import find_packages, setup
 
+import os
+from glob import glob
+
 package_name = 'drone_fsm'
 
 setup(
@@ -10,6 +13,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'),
+        glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -32,7 +37,8 @@ setup(
             'six_seven = drone_fsm.six_seven:main',
             'landing_node = drone_fsm.landing_node:main',
             'takeoff_node = drone_fsm.takeoff_node:main',
-            'waypoint = drone_fsm.waypoint:main',
+            'waypoint_node = drone_fsm.waypoint_node:main',
+            'controller_sim_node = drone_fsm.controller_sim_node:main',
         ],
     }
 )

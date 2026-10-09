@@ -33,14 +33,14 @@ class LandingNode(Node):
             VehicleLandDetected, '/fmu/out/vehicle_land_detected', self.land_detected_callback, qos_profile)
 
         self.position_subscriber = self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
+            VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self.position_callback, qos_profile)
 
         self.land_service = self.create_service(Trigger, '/land', self.land_service_callback)
 
-        self.get_logger().info("Init ferdig")
+        self.get_logger().info("Init finished")
 
     def land_service_callback(self, request, response):
-        self.get_logger().info("Mottatt /land trigger. Starter landing.")
+        self.get_logger().info("Received /land trigger. Starting landing.")
         self.start_landing()
 
         response.success = True
@@ -52,15 +52,17 @@ class LandingNode(Node):
         self.is_landing = True
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.get_logger().info("Heartbeat laget")
+        self.get_logger().info("Heartbeat made")
 
     def timer_callback(self):
         self.publish_offboard()
         self.publish_setpoint()
 
+    # Logs only under landing and at most 1 time per second, otherwise the log would be too long.
     def position_callback(self, msg):
-        position = [msg.x, msg.y, msg.z]
-        self.get_logger().info(f"pos: {position}")
+        if self.is_landing:
+            position = [round(msg.x, 2), round(msg.y, 2), round(msg.z, 2)]
+            self.get_logger().info(f"pos: {position}", throttle_duration_sec=1.0)
 
     def publish_setpoint(self):
         setpoint = TrajectorySetpoint()
@@ -85,7 +87,11 @@ class LandingNode(Node):
         self.offboard_publisher.publish(msg)
 
     def land_detected_callback(self, msg):
-        self.get_logger().info(f"landed: {msg.landed}. ground_contact: {msg.ground_contact}. is_landing: {self.is_landing}")
+        if self.is_landing:
+            self.get_logger().info(
+                f"landed: {msg.landed}. ground_contact: {msg.ground_contact}",
+                throttle_duration_sec=1.0)
+
         if self.is_landing and msg.landed:
             self.landing_finished()
         
@@ -94,7 +100,7 @@ class LandingNode(Node):
         if self.timer is not None:
             self.timer.destroy()
             self.timer = None
-            self.get_logger().info("Stoppet timer")
+            self.get_logger().info("Stopped timer")
             self.disarm()
 
     def disarm(self):
